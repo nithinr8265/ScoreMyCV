@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Log in — ScoreMyCV{% endblock %}
+{% block body %}
+<div class="auth-layout">
+
+  <!-- Left panel -->
+  <div class="auth-panel-left">
+    <div style="position:relative;z-index:1;text-align:center;">
+      <div class="logo-mark" style="width:56px;height:56px;font-size:1.25rem;margin:0 auto 2rem;">SC</div>
+      <h2 class="display-font" style="color:#fff;font-size:2rem;margin-bottom:1rem;">Know your resume's<br>true ATS score</h2>
+      <p style="color:rgba(255,255,255,0.7);max-width:320px;margin:0 auto 2rem;">AI-powered analysis. Keyword gaps. Instant improvements. Get more interviews.</p>
+      <div style="display:flex;flex-direction:column;gap:0.75rem;max-width:300px;margin:0 auto;">
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:1rem;display:flex;align-items:center;gap:0.75rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span style="color:rgba(255,255,255,0.9);font-size:0.9375rem;">ATS Score 0–100</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:1rem;display:flex;align-items:center;gap:0.75rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span style="color:rgba(255,255,255,0.9);font-size:0.9375rem;">Keyword gap detection</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:1rem;display:flex;align-items:center;gap:0.75rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span style="color:rgba(255,255,255,0.9);font-size:0.9375rem;">Company-specific match</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-panel-right">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="logo-mark">SC</div>
+        <span class="logo-text display-font">Score<span>My</span>CV</span>
+      </div>
+      <div class="auth-header">
+        <h1>Welcome back</h1>
+        <p>Log in to your account to continue</p>
+      </div>
+
+      <div id="alert-box"></div>
+
+      <!-- Google -->
+      <button class="google-btn" id="google-btn" onclick="loginWithGoogle()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+
+      <div class="divider">or</div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="email">Email <span>*</span></label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" autocomplete="email" required>
+          <div class="form-error" id="email-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password <span>*</span></label>
+          <div class="input-group">
+            <input type="password" id="password" name="password" class="form-control" placeholder="Your password" autocomplete="current-password" required>
+            <button type="button" class="input-group-icon" onclick="togglePassword('password')">
+              <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="form-error" id="pass-error"></div>
+        </div>
+        <div style="text-align:right;margin:-0.5rem 0 1.25rem;">
+          <a href="/auth/forgot-password" class="text-sm" style="color:var(--accent);">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="submit-btn">Log in</button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/auth/signup" style="color:var(--accent);font-weight:600;">Sign up free</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+function togglePassword(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === "password" ? "text" : "password";
+}
+
+function showAlert(msg, type="error") {
+  const box = document.getElementById("alert-box");
+  const icon = type === "error"
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
+  box.innerHTML = `<div class="alert alert-${type}">${icon}<span>${msg}</span></div>`;
+}
+
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById("submit-btn");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  document.getElementById("email-error").textContent = "";
+  document.getElementById("pass-error").textContent = "";
+  document.getElementById("alert-box").innerHTML = "";
+
+  let valid = true;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById("email-error").textContent = "Enter a valid email address";
+    document.getElementById("email").classList.add("error");
+    valid = false;
+  }
+  if (!password) {
+    document.getElementById("pass-error").textContent = "Password is required";
+    document.getElementById("password").classList.add("error");
+    valid = false;
+  }
+  if (!valid) return;
+
+  setLoading(btn, true);
+  try {
+    const data = await apiFetch("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+    showToast("Logged in successfully!", "success");
+    setTimeout(() => window.location.href = "/dashboard", 500);
+  } catch (err) {
+    showAlert(err.message);
+    setLoading(btn, false);
+  }
+});
+
+// Google OAuth via Supabase JS SDK
+async function loginWithGoogle() {
+  const btn = document.getElementById("google-btn");
+  btn.disabled = true;
+  btn.textContent = "Redirecting...";
+  // This requires Supabase JS to be configured on the frontend
+  // For now redirect to a backend-initiated OAuth flow
+  window.location.href = "/auth/google/redirect";
+}
+
+// Clear error state on input
+["email","password"].forEach(id => {
+  document.getElementById(id)?.addEventListener("input", () => {
+    document.getElementById(id).classList.remove("error");
+  });
+});
+</script>
+{% endblock %}

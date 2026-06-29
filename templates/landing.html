@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}ScoreMyCV — Know Your ATS Score Instantly{% endblock %}
+{% block body %}
+
+<!-- Nav -->
+<nav class="landing-nav">
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <div class="logo-mark">SC</div>
+    <span class="logo-text display-font">Score<span>My</span>CV</span>
+  </div>
+  <div class="landing-nav-links flex items-center gap-2">
+    <a href="#features" class="btn btn-ghost btn-sm">Features</a>
+    <a href="#how-it-works" class="btn btn-ghost btn-sm">How it works</a>
+  </div>
+  <div class="flex items-center gap-1">
+    <button class="theme-toggle" aria-label="Toggle theme">
+      <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="theme-icon-sun hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <a href="/auth/login" class="btn btn-outline btn-sm">Log in</a>
+    <a href="/auth/signup" class="btn btn-primary btn-sm">Get started free</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      AI-powered ATS analysis in seconds
+    </div>
+    <h1 class="display-font" style="font-size:clamp(2rem,5vw,3.25rem);font-weight:800;line-height:1.15;">
+      Does your resume pass<br>the ATS filter?
+    </h1>
+    <p>Upload your resume and get an instant ATS score, keyword gap analysis, and AI-powered suggestions to land more interviews.</p>
+    <div class="hero-actions">
+      <a href="/auth/signup" class="btn btn-primary btn-lg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Analyze my resume — free
+      </a>
+      <a href="#how-it-works" class="btn btn-outline btn-lg">See how it works</a>
+    </div>
+
+    <!-- Mock score UI -->
+    <div class="hero-visual" style="padding:2rem;">
+      <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+        <div style="text-align:center;flex:0 0 auto;">
+          <div class="score-circle" data-score="84" style="width:140px;height:140px;">
+            <svg width="140" height="140" viewBox="0 0 160 160">
+              <circle class="score-circle-bg" cx="80" cy="80" r="70"/>
+              <circle class="score-circle-fill" cx="80" cy="80" r="70"/>
+            </svg>
+            <div class="score-text">
+              <div class="score-number display-font">84</div>
+              <div class="score-label">ATS Score</div>
+            </div>
+          </div>
+          <div class="badge badge-green mt-2">Grade: A</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <p class="text-sm font-semibold mb-2" style="color:var(--text-primary);">Section Scores</p>
+          <div class="progress-bar-wrap">
+            <div class="progress-label"><span>Work Experience</span><span>91%</span></div>
+            <div class="progress-track"><div class="progress-fill" data-value="91"></div></div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label"><span>Skills</span><span>78%</span></div>
+            <div class="progress-track"><div class="progress-fill" data-value="78"></div></div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label"><span>Education</span><span>85%</span></div>
+            <div class="progress-track"><div class="progress-fill" data-value="85"></div></div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label"><span>Projects</span><span>62%</span></div>
+            <div class="progress-track"><div class="progress-fill" data-value="62"></div></div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <p class="text-sm font-semibold mb-2" style="color:var(--text-primary);">Missing Keywords</p>
+          <div class="keyword-grid">
+            <span class="tag">Docker</span><span class="tag">Kubernetes</span><span class="tag">CI/CD</span>
+            <span class="tag">REST API</span><span class="tag">Agile</span><span class="tag">AWS</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section style="padding:2rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-surface);">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;text-align:center;">
+      <div><div class="display-font" style="font-size:2rem;font-weight:800;color:var(--accent);">10,000+</div><div class="text-sm text-muted">Resumes analyzed</div></div>
+      <div><div class="display-font" style="font-size:2rem;font-weight:800;color:var(--accent);">94%</div><div class="text-sm text-muted">Accuracy rate</div></div>
+      <div><div class="display-font" style="font-size:2rem;font-weight:800;color:var(--accent);">3x</div><div class="text-sm text-muted">More interview callbacks</div></div>
+      <div><div class="display-font" style="font-size:2rem;font-weight:800;color:var(--accent);">&lt;30s</div><div class="text-sm text-muted">Analysis time</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="section">
+  <div class="container">
+    <div class="text-center mb-4">
+      <p class="section-eyebrow">Features</p>
+      <h2 class="display-font">Everything you need to beat the ATS</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <h3>Instant ATS Score</h3>
+        <p>Get a 0–100 ATS score with letter grade in under 30 seconds. Understand exactly where you stand.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <h3>Keyword Gap Analysis</h3>
+        <p>See exactly which keywords are missing from your resume for your target role and industry.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+        <h3>Company Match</h3>
+        <p>Enter a target company and designation to get tailored match percentage and improvement plan.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <h3>Section-by-Section Breakdown</h3>
+        <p>Radar chart and per-section scores for skills, experience, education, projects, and certifications.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <h3>Downloadable Reports</h3>
+        <p>Export your full analysis as a professional PDF or DOCX report to share with mentors or track progress.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h3>Analysis History</h3>
+        <p>All your past analyses are saved. Track how your resume improves over time with every iteration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how-it-works" class="section" style="background:var(--bg-surface);">
+  <div class="container">
+    <div class="text-center mb-4">
+      <p class="section-eyebrow">How it works</p>
+      <h2 class="display-font">From upload to insights in 3 steps</h2>
+    </div>
+    <div class="steps-grid">
+      <div>
+        <div class="step-num">1</div>
+        <h3>Upload or paste your resume</h3>
+        <p>Supports PDF, DOCX, and plain text. Or paste directly into the editor. Up to 10MB.</p>
+      </div>
+      <div>
+        <div class="step-num">2</div>
+        <h3>AI analysis runs instantly</h3>
+        <p>Our Groq-powered AI reads your resume like an ATS and generates a comprehensive score report.</p>
+      </div>
+      <div>
+        <div class="step-num">3</div>
+        <h3>Get your action plan</h3>
+        <p>Receive specific improvements, missing keywords, and recommendations tailored to your target role.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:4rem 1.5rem;">
+  <div class="cta-section">
+    <div style="position:relative;z-index:1;padding:0 2rem;">
+      <h2 class="display-font" style="font-size:clamp(1.75rem,3vw,2.5rem);margin-bottom:1rem;">Ready to ace the ATS?</h2>
+      <p>Join thousands of job seekers who improved their resume and landed more interviews.</p>
+      <a href="/auth/signup" class="btn btn-lg" style="background:#fff;color:var(--navy);font-weight:700;">
+        Analyze my resume — it's free
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="border-top:1px solid var(--border);padding:2rem 1.5rem;text-align:center;">
+  <div class="container flex items-center justify-between flex-wrap gap-2">
+    <div class="flex items-center gap-1">
+      <div class="logo-mark" style="width:28px;height:28px;font-size:0.7rem;">SC</div>
+      <span class="display-font font-bold" style="font-size:0.9375rem;">ScoreMyCV</span>
+    </div>
+    <p class="text-sm text-muted">© 2025 ScoreMyCV. Built with Flask + Groq AI.</p>
+  </div>
+</footer>
+
+{% endblock %}
