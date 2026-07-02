@@ -105,3 +105,22 @@ CREATE POLICY "analyses_delete_own" ON public.analyses
 -- ═══════════════════════════════════════════════════════════════
 -- DONE. Verify tables in Supabase Table Editor.
 -- ═══════════════════════════════════════════════════════════════
+
+-- RLS Policies: allow authenticated users to manage their own data
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analyses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert own profile"
+ON users FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can view own profile"
+ON users FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+ON users FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own analyses"
+ON analyses FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own analyses"
+ON analyses FOR SELECT USING (auth.uid() = user_id);
