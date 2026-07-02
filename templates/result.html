@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}ATS Result — ScoreMyCV{% endblock %}
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="flex items-center gap-2">
+        <button class="hamburger" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">ATS Result</span>
+      </div>
+      <div class="topbar-actions">
+        <a href="/upload" class="btn btn-primary btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Analysis
+        </a>
+      </div>
+    </div>
+
+    <div class="page-content" id="result-content">
+      <!-- Skeleton while loading -->
+      <div id="skeleton-state">
+        <div class="skeleton" style="height:200px;border-radius:16px;margin-bottom:1.5rem;"></div>
+        <div class="skeleton" style="height:120px;border-radius:12px;margin-bottom:1rem;"></div>
+        <div class="skeleton" style="height:120px;border-radius:12px;"></div>
+      </div>
+      <div id="result-body" class="hidden"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const ANALYSIS_ID = "{{ analysis_id }}";
+
+function scoreClass(s) { return s>=71?"score-green":s>=41?"score-yellow":"score-red"; }
+function badgeClass(s) { return s>=71?"badge-green":s>=41?"badge-yellow":"badge-red"; }
+function gradeColor(g) {
+  if(["A+","A"].includes(g)) return "var(--score-green)";
+  if(["B+","B"].includes(g)) return "var(--score-yellow)";
+  return "var(--score-red)";
+}
+
+function renderList(items, emptyMsg="None identified") {
+  if (!items || items.length === 0) return `<p class="text-muted text-sm">${emptyMsg}</p>`;
+  return items.map(i => `
+    <div class="flex items-start gap-2 mb-2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="flex-shrink:0;margin-top:3px;"><polyline points="20 6 9 17 4 12"/></svg>
+      <span style="font-size:0.9375rem;color:var(--text-primary);">${i}</span>
+    </div>`).join("");
+}
+
+function renderSection(title, icon, items, colorVar="var(--accent)") {
+  return `
+  <div class="card mb-3">
+    <div class="card-header">
+      <div class="flex items-center gap-2">
+        <div style="width:32px;height:32px;border-radius:8px;background:${colorVar}20;display:flex;align-items:center;justify-content:center;color:${colorVar};">${icon}</div>
+        <h3>${title}</h3>
+      </div>
+      <span class="badge badge-gray text-xs">${items?.length || 0} items</span>
+    </div>
+    <div class="card-body">${renderList(items)}</div>
+  </div>`;
+}
+
+async function loadResult() {
+  try {
+    const data = await apiFetch(`/analysis/${ANALYSIS_ID}`);
+    const a = data.analysis;
+    document.getElementById("skeleton-state").classList.add("hidden");
+    const body = document.getElementById("result-body");
+    body.classList.remove("hidden");
+
+    const score = a.ats_score || 0;
+    const sClass = scoreClass(score);
+    const bClass = badgeClass(score);
+    const circumference = 2 * Math.PI * 70;
+    const offset = circumference - (score / 100) * circumference;
+
+    const sectionScores = a.section_scores || {};
+    const radarLabels = Object.keys(sectionScores).map(k => k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
+    const radarData = Object.values(sectionScores);
+
+    const companySection = (a.company_name || a.designation) ? `
+    <div class="card mb-3">
+      <div class="card-header">
+        <div class="flex items-center gap-2">
+          <div style="width:32px;height:32px;border-radius:8px;background:#7c3aed20;display:flex;align-items:center;justify-content:center;color:#7c3aed;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <h3>Company / Role Match</h3>
+        </div>
+        ${a.company_match_percentage != null ? `<span class="badge ${badgeClass(a.company_match_percentage)}">${a.company_match_percentage}% match</span>` : ""}
+      </div>
+      <div class="card-body">
+        <div class="grid-2 mb-3">
+          ${a.company_name ? `<div><p class="text-xs text-muted mb-1">Target Company</p><p class="font-semibold">${a.company_name}</p></div>` : ""}
+          ${a.designation ? `<div><p class="text-xs text-muted mb-1">Designation</p><p class="font-semibold">${a.designation}</p></div>` : ""}
+        </div>
+        ${a.company_match_percentage != null ? `
+          <div class="progress-bar-wrap mb-3">
+            <div class="progress-label"><span>Match Score</span><span>${a.company_match_percentage}%</span></div>
+            <div class="progress-track" style="height:10px;"><div class="progress-fill" data-value="${a.company_match_percentage}"></div></div>
+          </div>` : ""}
+        ${a.company_missing_skills?.length ? `<div class="mb-3"><p class="text-sm font-semibold mb-1">Missing Skills</p>${a.company_missing_skills.map(s=>`<span class="tag">${s}</span>`).join("")}</div>` : ""}
+        ${a.recommended_certifications?.length ? `<div class="mb-3"><p class="text-sm font-semibold mb-1">Recommended Certifications</p>${renderList(a.recommended_certifications)}</div>` : ""}
+        ${a.suggested_projects?.length ? `<div><p class="text-sm font-semibold mb-1">Suggested Projects</p>${renderList(a.suggested_projects)}</div>` : ""}
+      </div>
+    </div>` : "";
+
+    body.innerHTML = `
+    <!-- Hero Score Card -->
+    <div class="card mb-3 fade-in">
+      <div class="card-body">
+        <div class="result-hero">
+          <div class="result-hero-score">
+            <div class="score-circle" data-score="${score}" style="width:160px;height:160px;">
+              <svg width="160" height="160" viewBox="0 0 160 160">
+                <circle class="score-circle-bg" cx="80" cy="80" r="70"/>
+                <circle class="score-circle-fill" cx="80" cy="80" r="70"/>
+              </svg>
+              <div class="score-text">
+                <div class="score-number display-font">${score}</div>
+                <div class="score-label">ATS Score</div>
+              </div>
+            </div>
+          </div>
+          <div class="result-hero-info">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="badge ${bClass}" style="font-size:0.9375rem;padding:0.375rem 1rem;">Grade: ${a.letter_grade || "N/A"}</span>
+              ${a.file_name ? `<span class="badge badge-gray">${a.file_name}</span>` : ""}
+              ${a.company_name ? `<span class="badge badge-blue">${a.company_name}</span>` : ""}
+              ${a.designation ? `<span class="badge badge-blue">${a.designation}</span>` : ""}
+            </div>
+            <h2 class="display-font mb-2" style="font-size:1.5rem;">
+              ${score >= 71 ? "Strong resume!" : score >= 41 ? "Room for improvement" : "Needs significant work"}
+            </h2>
+            ${a.summary ? `<p style="color:var(--text-secondary);line-height:1.7;max-width:560px;">${a.summary}</p>` : ""}
+            <div class="result-actions">
+              <a href="/report/pdf/${ANALYSIS_ID}" class="btn btn-outline btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                PDF Report
+              </a>
+              <a href="/report/docx/${ANALYSIS_ID}" class="btn btn-outline btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                DOCX Report
+              </a>
+              <button onclick="confirmDelete('${ANALYSIS_ID}')" class="btn btn-ghost btn-sm" style="color:#dc2626;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Scores + Radar -->
+    <div class="grid-2 mb-3">
+      <div class="card">
+        <div class="card-header"><h3>Section Scores</h3></div>
+        <div class="card-body" id="section-scores-body">
+          ${Object.entries(sectionScores).map(([k,v]) => `
+          <div class="progress-bar-wrap">
+            <div class="progress-label">
+              <span>${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</span>
+              <span>${v}%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" data-value="${v}"></div></div>
+          </div>`).join("") || "<p class='text-muted text-sm'>No section data available</p>"}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Skill Radar</h3></div>
+        <div class="card-body" style="display:flex;align-items:center;justify-content:center;">
+          <canvas id="radar-chart" width="260" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keywords -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <div class="flex items-center gap-2">
+          <div style="width:32px;height:32px;border-radius:8px;background:#dc262620;display:flex;align-items:center;justify-content:center;color:#dc2626;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3>Missing Keywords</h3>
+        </div>
+        <span class="badge badge-red">${a.missing_keywords?.length || 0} missing</span>
+      </div>
+      <div class="card-body">
+        ${a.missing_keywords?.length ? `<div class="keyword-grid">${a.missing_keywords.map(k=>`<span class="tag" style="background:#fee2e2;color:#991b1b;border-color:#fecaca;">${k}</span>`).join("")}</div>`
+          : `<p class="text-sm text-muted">Great! No critical keywords missing.</p>`}
+      </div>
+    </div>
+
+    ${renderSection("Strengths", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>`, a.strengths, "var(--score-green)")}
+    ${renderSection("Weaknesses", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`, a.weaknesses, "#dc2626")}
+    ${renderSection("ATS Improvement Suggestions", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>`, a.ats_improvements, "var(--accent)")}
+    ${renderSection("Recommended Skills", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`, a.recommended_skills, "#7c3aed")}
+    ${a.formatting_issues?.length ? renderSection("Formatting Issues", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>`, a.formatting_issues, "#ca8a04") : ""}
+    ${companySection}
+    `;
+
+    // Init score circles and progress bars
+    document.querySelectorAll(".score-circle[data-score]").forEach(el => {
+      animateScoreCircle(el, parseInt(el.dataset.score, 10));
+    });
+    animateProgressBars();
+
+    // Radar Chart
+    if (radarLabels.length > 0 && typeof Chart !== "undefined") {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      const ctx = document.getElementById("radar-chart").getContext("2d");
+      new Chart(ctx, {
+        type: "radar",
+        data: {
+          labels: radarLabels,
+          datasets: [{
+            label: "Section Score",
+            data: radarData,
+            backgroundColor: "rgba(37,99,235,0.15)",
+            borderColor: "rgba(37,99,235,0.8)",
+            pointBackgroundColor: "#2563eb",
+            pointBorderColor: "#fff",
+            pointRadius: 4,
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            r: {
+              min: 0, max: 100,
+              ticks: { stepSize: 25, display: false },
+              grid: { color: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" },
+              pointLabels: { font: { size: 11, family: "Inter" }, color: isDark ? "#94a3b8" : "#475569" }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+  } catch(err) {
+    document.getElementById("skeleton-state").classList.add("hidden");
+    document.getElementById("result-body").classList.remove("hidden");
+    document.getElementById("result-body").innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <h3>Could not load result</h3>
+        <p>${err.message}</p>
+        <a href="/history" class="btn btn-primary mt-2">Back to History</a>
+      </div>`;
+  }
+}
+
+// Delete redirects to history
+const _origConfirmDelete = window.confirmDelete;
+window.confirmDelete = async (id) => {
+  if (!confirm("Delete this analysis? This cannot be undone.")) return;
+  try {
+    await apiFetch(`/analysis/${id}`, { method: "DELETE" });
+    showToast("Analysis deleted", "success");
+    setTimeout(() => window.location.href = "/history", 600);
+  } catch(e) { showToast(e.message, "error"); }
+};
+
+loadResult();
+</script>
+{% endblock %}

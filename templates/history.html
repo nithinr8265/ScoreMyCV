@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}History — ScoreMyCV{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+  <div class="main-content">
+    <div class="topbar">
+      <div class="flex items-center gap-2">
+        <button class="hamburger" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">Analysis History</span>
+      </div>
+      <a href="/upload" class="btn btn-primary btn-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Analysis
+      </a>
+    </div>
+
+    <div class="page-content">
+      <div class="mb-3 flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="display-font">Your Analyses</h2>
+          <p class="text-muted text-sm" id="count-label">Loading…</p>
+        </div>
+        <input type="text" id="search-input" class="form-control" style="max-width:240px;" placeholder="Search by file or company…">
+      </div>
+
+      <div class="card">
+        <div id="history-table">
+          <div class="card-body">
+            <div class="skeleton" style="height:40px;margin-bottom:12px;"></div>
+            <div class="skeleton" style="height:40px;margin-bottom:12px;"></div>
+            <div class="skeleton" style="height:40px;width:70%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let allAnalyses = [];
+
+function badgeClass(s) { return s>=71?"badge-green":s>=41?"badge-yellow":"badge-red"; }
+
+function renderTable(analyses) {
+  const container = document.getElementById("history-table");
+  if (analyses.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <h3>No analyses found</h3>
+        <p>Try a different search, or analyze a new resume.</p>
+        <a href="/upload" class="btn btn-primary mt-2">Analyze Resume</a>
+      </div>`;
+    return;
+  }
+
+  const rows = analyses.map(a => {
+    const date = new Date(a.created_at).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+    return `
+    <tr id="row-${a.id}">
+      <td>
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div>
+            <div class="font-medium" style="font-size:0.9375rem;">${a.file_name || "Pasted resume"}</div>
+            <div class="td-muted">${date}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge ${badgeClass(a.ats_score)}">${a.ats_score}/100</span></td>
+      <td><span class="badge badge-gray" style="font-size:0.875rem;">${a.letter_grade || "—"}</span></td>
+      <td class="hide-mobile">${a.company_name ? `<span class="badge badge-blue">${a.company_name}</span>` : '<span class="text-muted">—</span>'}</td>
+      <td class="hide-mobile">${a.designation || '<span class="text-muted">—</span>'}</td>
+      <td>
+        <div class="flex items-center gap-1">
+          <a href="/result/${a.id}" class="btn btn-ghost btn-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            View
+          </a>
+          <button onclick="deleteAnalysis('${a.id}')" class="btn btn-ghost btn-sm" style="color:#dc2626;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+
+  container.innerHTML = `
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Resume</th>
+          <th>Score</th>
+          <th>Grade</th>
+          <th class="hide-mobile">Company</th>
+          <th class="hide-mobile">Role</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+async function deleteAnalysis(id) {
+  if (!confirm("Delete this analysis? This cannot be undone.")) return;
+  try {
+    await apiFetch(`/analysis/${id}`, { method: "DELETE" });
+    allAnalyses = allAnalyses.filter(a => a.id !== id);
+    showToast("Analysis deleted", "success");
+    filterTable();
+    updateCount();
+  } catch(e) { showToast(e.message, "error"); }
+}
+
+function filterTable() {
+  const q = document.getElementById("search-input").value.toLowerCase();
+  const filtered = allAnalyses.filter(a =>
+    (a.file_name || "").toLowerCase().includes(q) ||
+    (a.company_name || "").toLowerCase().includes(q) ||
+    (a.designation || "").toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+  document.getElementById("count-label").textContent = `${filtered.length} of ${allAnalyses.length} analyses`;
+}
+
+function updateCount() {
+  document.getElementById("count-label").textContent = `${allAnalyses.length} analyses`;
+}
+
+document.getElementById("search-input").addEventListener("input", filterTable);
+
+async function loadHistory() {
+  try {
+    const data = await apiFetch("/analysis/history");
+    allAnalyses = data.analyses || [];
+    updateCount();
+    filterTable();
+  } catch(err) {
+    document.getElementById("history-table").innerHTML = `
+      <div class="card-body"><div class="alert alert-error"><span>${err.message}</span></div></div>`;
+  }
+}
+
+loadHistory();
+</script>
+{% endblock %}
