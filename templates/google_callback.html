@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Signing in… — ScoreMyCV{% endblock %}
+{% block body %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;padding:2rem;">
+  <div class="logo-mark" style="width:48px;height:48px;font-size:1.125rem;">SC</div>
+  <div class="spinner"></div>
+  <p style="color:var(--text-secondary);">Completing sign in…</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Supabase puts tokens in the URL fragment after OAuth redirect
+const hash = window.location.hash;
+const params = new URLSearchParams(hash.substring(1));
+const access_token = params.get("access_token");
+
+if (access_token) {
+  fetch("/auth/google/callback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ access_token }),
+    credentials: "same-origin"
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = "/dashboard";
+    } else {
+      alert("Sign in failed: " + (data.error || "Unknown error"));
+      window.location.href = "/auth/login";
+    }
+  })
+  .catch(() => window.location.href = "/auth/login");
+} else {
+  window.location.href = "/auth/login";
+}
+</script>
+{% endblock %}
