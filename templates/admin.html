@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — ScoreMyCV{% endblock %}
+{% block body %}
+<div class="app-layout">
+  {% include "partials/sidebar.html" %}
+  <div class="main-content">
+    <div class="topbar">
+      <div class="flex items-center gap-2">
+        <button class="hamburger" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title">Admin Panel</span>
+      </div>
+      <span class="badge badge-navy">Admin</span>
+    </div>
+    <div class="page-content">
+      <div class="mb-4">
+        <h2 class="display-font">Platform Overview</h2>
+        <p class="text-muted">Monitor usage and platform health.</p>
+      </div>
+
+      <div class="stats-grid mb-4" id="admin-stats">
+        <div class="stat-card"><div class="stat-value skeleton" style="height:40px;width:80px;"></div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card"><div class="stat-value skeleton" style="height:40px;width:80px;"></div><div class="stat-label">Total Analyses</div></div>
+      </div>
+
+      <div class="grid-2" style="align-items:start;gap:1.5rem;">
+        <div class="card">
+          <div class="card-header"><h3>Top Designations</h3></div>
+          <div class="card-body" id="top-designations"><div class="animate-pulse text-muted text-sm">Loading…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Top Companies</h3></div>
+          <div class="card-body" id="top-companies"><div class="animate-pulse text-muted text-sm">Loading…</div></div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header"><h3>Recent Analyses</h3></div>
+        <div id="recent-admin-table">
+          <div class="card-body"><div class="animate-pulse text-muted text-sm">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadAdminStats() {
+  try {
+    const data = await apiFetch("/admin/stats");
+    // Stats
+    document.getElementById("admin-stats").innerHTML = `
+      <div class="stat-card"><div class="stat-value display-font">${data.total_users}</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card"><div class="stat-value display-font">${data.total_analyses}</div><div class="stat-label">Total Analyses</div></div>
+    `;
+
+    // Top designations
+    document.getElementById("top-designations").innerHTML = data.top_designations.length
+      ? data.top_designations.map(([d,c])=>`<div class="flex justify-between mb-2"><span>${d}</span><span class="badge badge-blue">${c}</span></div>`).join("")
+      : `<p class="text-muted text-sm">No data yet</p>`;
+
+    // Top companies
+    document.getElementById("top-companies").innerHTML = data.top_companies.length
+      ? data.top_companies.map(([c,n])=>`<div class="flex justify-between mb-2"><span>${c}</span><span class="badge badge-blue">${n}</span></div>`).join("")
+      : `<p class="text-muted text-sm">No data yet</p>`;
+
+    // Recent analyses table
+    const rows = (data.recent_analyses || []).map(a => {
+      const date = new Date(a.created_at).toLocaleDateString("en-IN", {day:"2-digit",month:"short"});
+      return `<tr>
+        <td>${a.users?.name || "—"}<div class="td-muted">${a.users?.email || ""}</div></td>
+        <td><span class="badge ${a.ats_score>=71?"badge-green":a.ats_score>=41?"badge-yellow":"badge-red"}">${a.ats_score}/100</span></td>
+        <td class="hide-mobile">${a.company_name||"—"}</td>
+        <td class="hide-mobile">${a.designation||"—"}</td>
+        <td class="td-muted">${date}</td>
+      </tr>`;
+    }).join("");
+
+    document.getElementById("recent-admin-table").innerHTML = rows.length
+      ? `<div class="table-wrap"><table><thead><tr><th>User</th><th>Score</th><th class="hide-mobile">Company</th><th class="hide-mobile">Role</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="card-body text-center text-muted">No analyses yet</div>`;
+
+  } catch(e) {
+    showToast(e.message, "error");
+  }
+}
+loadAdminStats();
+</script>
+{% endblock %}
