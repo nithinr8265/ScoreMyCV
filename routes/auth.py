@@ -93,28 +93,22 @@ def forgot_password():
     if result.data:
         token = create_reset_token(email)
         reset_url = f"{os.environ.get('APP_URL', 'http://localhost:5000')}/auth/reset-password?token={token}"
-        
         try:
-            from app import mail
-            from flask_mail import Message
-            import signal
-            
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Mail timeout")
-            
-            msg = Message(
-                subject="Reset your ScoreMyCV password",
-                recipients=[email],
-                html=f"""
+            import resend
+            resend.api_key = os.environ.get("RESEND_API_KEY")
+            resend.Emails.send({
+                "from": "ScoreMyCV <onboarding@resend.dev>",
+                "to": email,
+                "subject": "Reset your ScoreMyCV password",
+                "html": f"""
                 <h2>Password Reset</h2>
                 <p>Click the link below to reset your password. This link expires in 1 hour.</p>
                 <a href="{reset_url}" style="background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;">Reset Password</a>
                 <p>If you didn't request this, ignore this email.</p>
                 """
-            )
-            mail.send(msg)
+            })
         except Exception as e:
-            print(f"Mail send failed: {e}")
+            print(f"Mail error: {e}")
 
     return jsonify({"success": True, "message": "If that email exists, a reset link has been sent"}), 200
 
