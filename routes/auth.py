@@ -89,15 +89,19 @@ def forgot_password():
 
     sb = get_supabase()
     result = sb.table("users").select("id").eq("email", email).execute()
-    # Always return success to prevent email enumeration
+    
     if result.data:
         token = create_reset_token(email)
         reset_url = f"{os.environ.get('APP_URL', 'http://localhost:5000')}/auth/reset-password?token={token}"
-        # Send email via Flask-Mail (imported in app.py, use current_app)
-        from flask import current_app
-        from flask_mail import Message
+        
         try:
             from app import mail
+            from flask_mail import Message
+            import signal
+            
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Mail timeout")
+            
             msg = Message(
                 subject="Reset your ScoreMyCV password",
                 recipients=[email],
@@ -109,8 +113,8 @@ def forgot_password():
                 """
             )
             mail.send(msg)
-        except Exception:
-            pass  # Log in production
+        except Exception as e:
+            print(f"Mail send failed: {e}")
 
     return jsonify({"success": True, "message": "If that email exists, a reset link has been sent"}), 200
 
