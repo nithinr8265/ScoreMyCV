@@ -1,108 +1,43 @@
-# ScoreMyCV — ATS Resume Analyzer
+# ScoreMyCV 🎯
 
-AI-powered ATS resume scoring platform. Built with Flask + Supabase + Groq AI.
+An AI-powered ATS Resume Analyzer that scores your resume against a job description and gives detailed feedback to help you land more interviews.
 
----
-
-## Quick Start
-
-### 1. Clone and set up
-
-```bash
-cd scoremycv
-python -m pip install -r requirements.txt
-cp .env.example .env
-# Fill in your keys in .env
-```
-
-### 2. Set up Supabase
-
-1. Go to [supabase.com](https://supabase.com) → New Project
-2. Open **SQL Editor** → paste and run `supabase_schema.sql`
-3. Go to **Storage** → New Bucket → name it `resumes` → set to private
-4. Copy your **Project URL** and **anon key** into `.env`
-
-### 3. Get your Groq API key
-
-1. Sign up at [console.groq.com](https://console.groq.com)
-2. Create an API key → paste into `.env` as `GROQ_API_KEY`
-
-### 4. Set up Gmail SMTP (for password reset emails)
-
-1. Google Account → Security → 2-Step Verification → App Passwords
-2. Generate a password for "Mail" → paste into `.env` as `MAIL_PASSWORD`
-
-### 5. Google OAuth (via Supabase)
-
-1. Supabase Dashboard → Authentication → Providers → Google → Enable
-2. Add your Google OAuth credentials (from Google Cloud Console)
-3. Set redirect URL to: `https://yourdomain.com/auth/google/callback-page`
-
-### 6. Run
-
-```bash
-python app.py
-```
-
-Visit `http://localhost:5000`
+**Live Demo:** [scoremycv-p3g9.onrender.com](https://scoremycv-p3g9.onrender.com)
 
 ---
 
-## Deploy to Render
+## Screenshots
 
-1. Push to GitHub
-2. Render → New Web Service → connect repo
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT --timeout 120`
-5. Add all environment variables from `.env`
+### Landing Page
+![Landing Page](screenshots/landing%20page.png)
 
----
+### Login Page
+![Login Page](screenshots/login%20page.png)
 
-## Project Structure
+### Upload Resume
+![Upload Page](screenshots/upload_page.png)
 
-```
-scoremycv/
-├── app.py                    # Flask app, main routes
-├── requirements.txt
-├── Procfile                  # Render/Railway deployment
-├── supabase_schema.sql       # Run in Supabase SQL Editor
-├── .env.example
-├── routes/
-│   ├── auth.py               # Signup, login, Google OAuth, password reset
-│   ├── resume.py             # File upload + text extraction
-│   ├── analysis.py           # Groq AI analysis + history
-│   ├── report.py             # PDF/DOCX report generation
-│   └── admin.py              # Admin panel stats
-├── utils/
-│   ├── supabase_client.py    # Supabase connection
-│   ├── groq_client.py        # Groq AI integration
-│   ├── extractor.py          # PDF/DOCX text extraction
-│   └── jwt_util.py           # JWT token helpers
-├── templates/
-│   ├── base.html             # Base layout
-│   ├── landing.html          # Public landing page
-│   ├── login.html / signup.html
-│   ├── forgot_password.html / reset_password.html
-│   ├── dashboard.html
-│   ├── upload.html           # Resume upload + analysis trigger
-│   ├── result.html           # Full ATS result with radar chart
-│   ├── history.html          # Analysis history with search
-│   ├── profile.html
-│   ├── admin.html
-│   └── partials/sidebar.html
-└── static/
-    ├── css/main.css          # Full design system, dark/light mode
-    └── js/main.js            # Utilities, toasts, animations
-```
+### ATS Result & Score
+![Result Page](screenshots/result%20page.png)
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Scan History
+![History Page](screenshots/history%20page.png)
 
 ---
 
-## Make someone an admin
+## Features
 
-In Supabase SQL Editor:
-```sql
-UPDATE public.users SET role = 'admin' WHERE email = 'your@email.com';
-```
+- 📄 Upload resume as PDF or DOCX
+- 🤖 AI-powered ATS scoring using Groq LLaMA 3.3 70B
+- 📊 Radar chart with detailed score breakdown
+- 🔑 Keyword match analysis
+- 📥 Download report as PDF or DOCX
+- 🔐 Google OAuth + Email/Password authentication
+- 📱 Fully responsive on mobile and tablet
+- 🕓 Scan history for all previous analyses
 
 ---
 
@@ -110,13 +45,90 @@ UPDATE public.users SET role = 'admin' WHERE email = 'your@email.com';
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python 3.11, Flask 3.0 |
-| AI | Groq `llama-3.3-70b-versatile` |
+| Backend | Flask (Python 3.11) |
+| Frontend | HTML, CSS, JavaScript |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth + bcrypt + JWT |
-| File Storage | Supabase Storage |
-| PDF extraction | pypdf |
-| DOCX extraction | python-docx |
-| Report generation | reportlab + python-docx |
-| Frontend | HTML5, CSS3, Vanilla JS, Chart.js |
-| Deployment | Render / Railway (Procfile included) |
+| Auth | Supabase Auth + Google OAuth |
+| AI | Groq API (LLaMA 3.3 70B) |
+| Deployment | Render |
+| PDF/DOCX | pdfplumber, python-docx, ReportLab |
+
+---
+
+## Project Structure
+scoremycv/
+├── app.py                  # Flask app entry point
+├── routes/
+│   ├── auth.py             # Authentication routes
+│   ├── analysis.py         # AI analysis routes
+│   ├── resume.py           # Resume upload routes
+│   ├── report.py           # Report generation
+│   └── admin.py            # Admin panel
+├── utils/
+│   ├── supabase_client.py  # Supabase connection
+│   ├── groq_client.py      # Groq AI client
+│   ├── extractor.py        # PDF/DOCX text extraction
+│   └── jwt_util.py         # JWT token utilities
+├── templates/              # Jinja2 HTML templates
+├── static/                 # CSS, JS, assets
+├── supabase_schema.sql     # Database schema with RLS
+├── requirements.txt
+└── Procfile
+
+---
+
+## Setup & Installation
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/nithinr8265/ScoreMyCV.git
+cd ScoreMyCV
+```
+
+### 2. Create virtual environment
+```bash
+python -m venv venv
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Mac/Linux
+```
+
+### 3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Set up environment variables
+```bash
+cp .env.example .env
+# Fill in your values in .env
+```
+
+### 5. Run the app
+```bash
+python app.py
+```
+
+---
+
+## Environment Variables
+
+```env
+FLASK_SECRET_KEY=your-secret-key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+GROQ_API_KEY=your-groq-api-key
+JWT_SECRET_KEY=your-jwt-secret
+APP_URL=http://127.0.0.1:5000
+```
+
+---
+
+## Team
+
+| Name | Role |
+|------|------|
+| Nithin | Backend — Flask routes, AI integration, deployment |
+| Swathi | Frontend — UI/CSS, database schema, templates |
+
+---
+
