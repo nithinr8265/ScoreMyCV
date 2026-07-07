@@ -56,6 +56,7 @@ An AI-powered ATS Resume Analyzer that scores your resume against a job descript
 ---
 
 ## Project Structure
+```
 scoremycv/
 ├── app.py                  # Flask app entry point
 ├── routes/
@@ -74,7 +75,7 @@ scoremycv/
 ├── supabase_schema.sql     # Database schema with RLS
 ├── requirements.txt
 └── Procfile
-
+```
 ---
 
 ## Setup & Installation
